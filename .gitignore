@@ -1,0 +1,8 @@
+# Python相关忽略文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+venv/
+.env
