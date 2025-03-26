@@ -25,6 +25,8 @@ class Simulator:
         self.flagF = False  # 溢出（overflow）
         self.flagN = False  # 负数（negative）
         self.flagZ = False  # 零（zero）
+        self.flagC = False
+        self.flagL = False
         # PC从0开始
         self.pc = 0
         # 程序存储：直接存asm的行
@@ -309,8 +311,8 @@ class Simulator:
             rsrc = self.parse_reg(tokens[2])
             shift_val = self.regs[rsrc]
             if shift_val < 0:
+                shift_val = shift_val & 0xF 
                 print(f"[SIM] LSH negative shift {shift_val} not supported in baseline!")
-                return
             old_val = self.regs[rdest]
             result = old_val << shift_val
             val_16 = self.to_16bit(result)
@@ -493,24 +495,44 @@ class Simulator:
             self.flagF = False
 
     def check_condition(self, cond):
-        """
-        cond 可以是数字，对应处理 F、N、Z 的组合。
-        例如:
-          0 => EQ => Z=1
-          1 => NE => Z=0
-          2 => ...
-        这里仅做示例，你可自行扩展
-        """
-        if cond == 0:  # EQ
+        # 假设 self.flagF, self.flagZ, self.flagN 是当前标志位
+        # cond 是 0..15，对应上表
+        if cond == 0:   # EQ
             return self.flagZ
-        elif cond == 1:  # NE
+        elif cond == 1: # NE
             return not self.flagZ
-        elif cond == 2:  # F=1?
+        elif cond == 2: # CS
+            # 需要看你是否实现了 C 标志
+            return self.flagC
+        elif cond == 3: # CC
+            return not self.flagC
+        elif cond == 4: # HI
+            return self.flagL  # L=1
+        elif cond == 5: # LS
+            return not self.flagL
+        elif cond == 6: # GT
+            return self.flagN
+        elif cond == 7: # LE
+            return not self.flagN
+        elif cond == 8: # FS
             return self.flagF
-        # ...
+        elif cond == 9: # FC
+            return not self.flagF
+        elif cond == 10: # LO
+            return (not self.flagL) and (not self.flagZ)
+        elif cond == 11: # HS
+            return self.flagL or self.flagZ
+        elif cond == 12: # LT
+            return (not self.flagN) and (not self.flagZ)
+        elif cond == 13: # GE
+            return self.flagN or self.flagZ
+        elif cond == 14: # UC
+            return True  # Unconditional
+        elif cond == 15:
+            return False # Never Jump
         else:
-            # 默认不满足
             return False
+
 
     def debug_print(self, msg):
         """

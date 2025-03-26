@@ -4,5 +4,7 @@ __pycache__/
 *.pyo
 *.pyd
 *.env
+*.hex
+*.asm
 venv/
 .env
