@@ -12,6 +12,34 @@
 import sys
 from src.mapping import instruction_set
 
+# 在文件开头或适当位置定义 cond_map 和辅助函数
+cond_map = {
+    "EQ": 0,   # Z=1
+    "NE": 1,   # Z=0
+    "CS": 2,   # C=1（若实现）
+    "CC": 3,   # C=0
+    "HI": 4,   # L=1
+    "LS": 5,   # L=0
+    "GT": 6,   # N=1
+    "LE": 7,   # N=0
+    "FS": 8,   # F=1
+    "FC": 9,   # F=0
+    "LO": 10,  # L=0 & Z=0
+    "HS": 11,  # L=1 or Z=1
+    "LT": 12,  # N=0 & Z=0
+    "GE": 13,  # N=1 or Z=1
+    "UC": 14,  # Unconditional
+    "NV": 15   # Never jump
+}
+
+def get_cond_mnemonic(cond_val):
+    """返回给定条件码数字对应的助记符；如果没有找到，则返回数字字符串。"""
+    for mnem, val in cond_map.items():
+        if val == cond_val:
+            return mnem
+    return str(cond_val)
+
+
 def disassemble_instruction(machine_code):
     """
     根据 16 位机器码反汇编出汇编语句字符串。
@@ -65,19 +93,23 @@ def disassemble_instruction(machine_code):
             if opcode == instr.opcode:
                 # BCOND 格式：位15-12: opcode, 11-8: cond, 7-0: disp (8位2's complement)
                 cond = (machine_code >> 8) & 0xF
+                cond_str = get_cond_mnemonic(cond)
                 disp = machine_code & 0xFF
                 # 进行 8 位符号扩展
                 if disp & 0x80:
                     disp = disp - 256
-                return f"{mnemonic} {cond}, {disp}"
+                return f"{mnemonic} {cond_str}, {disp}"
+
         elif instr.fmt == "Jcond":
             if opcode == instr.opcode:
                 # JCOND 格式：位15-12: opcode, 11-8: cond, 7-4: ext, 3-0: Rtarget
                 cond = (machine_code >> 8) & 0xF
+                cond_str = get_cond_mnemonic(cond)
                 ext = (machine_code >> 4) & 0xF
                 if instr.ext is not None and ext == instr.ext:
                     Rtarget = machine_code & 0xF
-                    return f"{mnemonic} {cond}, R{Rtarget}"
+                    return f"{mnemonic} {cond_str}, R{Rtarget}"
+
         elif instr.fmt == "RS":
             if opcode == instr.opcode:
                 # RS 格式（例如 STOR）：位15-12: opcode, 11-8: Rsrc, 7-4: ext, 3-0: Raddr
