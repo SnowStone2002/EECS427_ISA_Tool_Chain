@@ -1,5 +1,6 @@
 # Python相关忽略文件
 __pycache__/
+output/
 *.pyc
 *.pyo
 *.pyd

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import subprocess
 import sys
+import os
 
 def main():
     if len(sys.argv) < 2:
@@ -8,9 +9,18 @@ def main():
         sys.exit(1)
 
     input_file = sys.argv[1]
-    hex_file = "tests/output.hex"
-    asm_file = "tests/output.asm"
-    sim_output = "tmp.txt"
+
+    # 提取基础文件名，不包含目录和扩展名
+    base_name = os.path.splitext(os.path.basename(input_file))[0]
+
+    # 输出目录
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 构造输出文件路径
+    hex_file = os.path.join(output_dir, f"{base_name}.hex")
+    asm_file = os.path.join(output_dir, f"{base_name}_no_label.asm")
+    sim_output = os.path.join(output_dir, "simulation.out")
 
     try:
         # 调用汇编器
@@ -27,7 +37,7 @@ def main():
             check=True
         )
 
-        # 调用仿真器，输出重定向到文件
+        # 调用仿真器，输出重定向到 simulation.out 文件
         print("Running simulator...")
         with open(sim_output, "w") as f:
             subprocess.run(
