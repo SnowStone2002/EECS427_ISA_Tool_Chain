@@ -31,7 +31,7 @@ def main():
         print("Running simulator...")
         with open(sim_output, "w") as f:
             subprocess.run(
-                ["python3", "./src/simulator.py", asm_file, "> temp.txt"],
+                ["python3", "./src/simulator.py", asm_file],
                 check=True,
                 stdout=f
             )

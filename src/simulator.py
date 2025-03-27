@@ -421,6 +421,7 @@ class Simulator:
                 old_pc = self.pc
                 new_pc = self.regs[rsrc]
                 self.debug_print(f"JCOND => cond {cond_token} true, jump from {old_pc} to {new_pc}")
+                self.pc = new_pc - 1
             else:
                 self.debug_print(f"JCOND => cond {cond_token} false, no jump")
 
@@ -435,6 +436,7 @@ class Simulator:
             self.regs[rdest] = self.to_16bit(link_val)
             new_pc = self.regs[rsrc]
             old_pc = self.pc
+            self.pc = new_pc - 1
             self.debug_print(f"JAL => R{rdest} = {link_val}, jump from {old_pc} to {new_pc}")
 
         else:
