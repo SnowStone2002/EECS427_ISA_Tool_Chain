@@ -1,35 +1,63 @@
-; input.asm
-; Demonstration of labels, condition mnemonics, and some basic instructions.
-
 start:
-    ; 初始化 R0 = 5, R1 = 0
-    MOVI R0, 0x5
-    MOVI R1, 0x0
+    ; R0 = 0 (F0)
+    ; R1 = 1 (F1)
+    ; R2 = memory pointer
+    ; R6 = 50 (upper limit)
+    MOVI R0, 0
+    MOVI R1, 1
+    MOVI R2, 0
+    MOVI R6, 50
 
-loop:
-    ; R1 = R1 + 1
-    ADDI R1, 1
+fibo_loop:
+    CMP R6, R0
+    Bcond GT, done_fibo
+    WAIT
 
-    ; 比较 R0 和 R1，相当于 (R0 - R1) 更新标志
-    CMP R1, R0
+    STOR R0, R2
 
-    ; 如果 R0 == R1 则跳转到 finish
+    MOV R3, R0      
+    ADD R3, R1      ; R3 = R0 + R1
+    MOV R0, R1
+    MOV R1, R3
+
+    ADDI R2, 1
+    Bcond UC, fibo_loop
+    WAIT
+
+done_fibo:
+    ; 存入哨兵值 255，告诉后面循环“读到我就停”
+    MOVI R4, 255
+    STOR R4, R2
+
+    ; 重置 R2，准备从内存第 0 单元开始读
+    MOVI R2, 0
+
+multiply_loop:
+    LOAD R4, R2
+
+    ; 需要先把 255 装到某个寄存器（比如 R7），再做 CMP
+    MOVI R7, 255
+    CMP R4, R7
     Bcond EQ, finish
+    WAIT
 
-    ; 如果 R0 != R1 则回到 loop
-    Bcond NE, loop
+    ; 用加法模拟 乘以 8
+    ADD R4, R4      ; 2x
+    ADD R4, R4      ; 4x
+    ADD R4, R4      ; 8x
 
-    ; 理论上永远不会执行到这里
-    ; 可以放一些“不会执行”的指令以做测试
-    MOVI R2, 0xFF
+    STOR R4, R2
+
+    ADDI R2, 1
+    Bcond UC, multiply_loop
+    WAIT
 
 finish:
-    ; 此处可以再做点事情
-    ; 示例：R1 = R1 - R0
-    SUB R0, R1
-
-    ; 最后无条件跳转到 R2 中的地址
-    ; (需要你在模拟器里决定 R2 里是什么，或运行时再写)
-    Jcond UC, R2
-
-    ; 也可以放 WAIT、STOR、LOAD 等看你需求
+    MOVI R0, 0
+    MOVI R1, 0
+    MOVI R2, 0
+    MOVI R3, 0
+    MOVI R4, 0
+    MOVI R5, 0
+    MOVI R6, 0
+    MOVI R7, 0

@@ -8,5 +8,7 @@ __pycache__/
 *.asm
 tmp.*
 *.tmp
+temp.*
+*.temp
 venv/
 .env

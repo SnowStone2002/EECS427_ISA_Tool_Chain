@@ -102,12 +102,13 @@ class Simulator:
 
         # 特殊指令 WAIT
         if mnemonic == "WAIT":
-            print(f"[SIM] WAIT encountered at PC={self.pc}. Simulation stops.")
-            self.halt = True
-            return
+            # print(f"[SIM] WAIT encountered at PC={self.pc}. Simulation stops.")
+            self.debug_print(f"WAIT")
+            # self.halt = True
+            # return
 
         # -------------- 寄存器-寄存器型 --------------
-        if mnemonic == "ADD":
+        elif mnemonic == "ADD":
             # ADD Rsrc, Rdest => Rdest = Rdest + Rsrc
             if len(tokens) != 3:
                 print("[SIM] Syntax error in ADD (expected ADD Rsrc, Rdest)")

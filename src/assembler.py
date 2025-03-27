@@ -22,8 +22,9 @@ def assemble_file(input_file, output_file):
 
     # 写入hex
     with open(output_file, "w", encoding="utf-8") as f:
-        for code in machine_codes:
-            f.write(f"{code:04X}\n")
+        for sublist in machine_codes:
+            for code in sublist:
+                f.write(f"{code:04X}\n")
 
     print(f"Assembly completed. {len(machine_codes)} instructions written to {output_file}.")
 

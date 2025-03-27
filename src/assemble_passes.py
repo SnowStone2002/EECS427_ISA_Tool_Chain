@@ -212,7 +212,9 @@ def build_machine_code(instr, operands):
     原先 assemble_line 中的机器码打包逻辑
     (可直接复制你 assembler.py 里对应的行)
     """
+    machine_codes = []  # 改为列表
     machine_code = 0
+
     if instr.fmt in ("RR", "RI", "RI4", "Bcond", "Jcond", "RS", "IR"):
         # 将 opcode 放入高 4 位
         machine_code |= (instr.opcode & 0xF) << 12
@@ -233,6 +235,10 @@ def build_machine_code(instr, operands):
         elif instr.fmt == "Bcond":
             machine_code |= (operands["cond"] & 0xF) << 8
             machine_code |= (operands["disp"] & 0xFF)
+            # 对于 Bcond，不仅返回当前指令，还加入一条 NOP（例如 0x0000）
+            # machine_codes.append(machine_code)
+            # machine_codes.append(0x0000)  # 加入一条 NOP 指令
+            # return machine_codes
         elif instr.fmt == "Jcond":
             machine_code |= (operands["cond"] & 0xF) << 8
             machine_code |= (instr.ext & 0xF) << 4
@@ -247,10 +253,10 @@ def build_machine_code(instr, operands):
     elif instr.fmt == "FIX":
         machine_code = instr.fields["value"] & 0xFFFF
     elif instr.fmt == "FIXV":
-        # 对于 FIXV 格式（如 EXCP），这里简单将 vector 设为 0
         vector = 0
         machine_code = (instr.fields["fixed"] & 0xFFF0) | (vector & 0xF)
     else:
         raise ValueError(f"Unsupported instruction format: {instr.fmt}")
-    
-    return machine_code
+
+    machine_codes.append(machine_code)
+    return machine_codes
