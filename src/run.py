@@ -5,7 +5,7 @@ import os
 
 def main():
     if len(sys.argv) < 2:
-        print("用法: python process.py <inputfile>")
+        print("用法: python run.py <inputfile>")
         sys.exit(1)
 
     input_file = sys.argv[1]

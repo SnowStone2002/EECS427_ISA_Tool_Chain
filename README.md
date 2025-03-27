@@ -151,7 +151,7 @@
 2. **反汇编**：使用 `disassembler.py` 将 `.hex` 文件转换回汇编代码（无标签版本）。
 3. **仿真**：使用 `simulator.py` 执行反汇编后的汇编代码，并生成仿真日志。
 
-为了简化流程，可使用 [src/process.py](./src/process.py) 脚本，该脚本整合了上述步骤，只需指定输入文件名即可：
+为了简化流程，可使用 [src/run.py](./src/run.py) 脚本，该脚本整合了上述步骤，只需指定输入文件名即可：
 
 ```bash
-python3 ./src/process.py tests/Fibonacci.asm
+python3 ./src/run.py tests/Fibonacci.asm
