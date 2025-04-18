@@ -20,7 +20,7 @@ def main():
     # 构造输出文件路径
     hex_file = os.path.join(output_dir, f"{base_name}.hex")
     asm_file = os.path.join(output_dir, f"{base_name}_no_label.asm")
-    sim_output = os.path.join(output_dir, "simulation.out")
+    sim_output = os.path.join(output_dir, f"{base_name}.out")
 
     try:
         # 调用汇编器
