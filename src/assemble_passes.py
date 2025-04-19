@@ -145,6 +145,13 @@ def assemble_line_label_aware(line, current_addr, symbol_table):
         operands["s"] = s
         operands["imm"] = imm
 
+    elif instr.fmt == "I4":
+        # 用于 SETQ
+        if len(tokens) != 2:
+            raise ValueError(f"Instruction {mnemonic} requires 1 operands, got {len(tokens)-1}")
+        imm = parse_immediate(tokens[1])
+        operands["imm"] = imm
+
     elif instr.fmt == "Bcond":
         if len(tokens) != 3:
             raise ValueError(f"Instruction {mnemonic} requires 2 operands, got {len(tokens)-1}")
@@ -215,7 +222,7 @@ def build_machine_code(instr, operands):
     machine_codes = []  # 改为列表
     machine_code = 0
 
-    if instr.fmt in ("RR", "RI", "RI4", "Bcond", "Jcond", "RS", "IR"):
+    if instr.fmt in ("RR", "RI", "RI4", "Bcond", "Jcond", "RS", "IR", "I4"):
         # 将 opcode 放入高 4 位
         machine_code |= (instr.opcode & 0xF) << 12
 
@@ -231,6 +238,9 @@ def build_machine_code(instr, operands):
             # 假定 RI4 格式：位7-5 固定为0，位4 存 s，位3-0 为 immed
             s_bit = (operands["s"] & 0x1) << 4
             machine_code |= s_bit
+            machine_code |= (operands["imm"] & 0xF)
+        elif instr.fmt == "I4":
+            machine_code |= (instr.ext & 0xF) << 4
             machine_code |= (operands["imm"] & 0xF)
         elif instr.fmt == "Bcond":
             machine_code |= (operands["cond"] & 0xF) << 8

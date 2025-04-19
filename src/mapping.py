@@ -25,6 +25,11 @@ ri4_fields = {
     "imm":   (0, 3)
 }
 
+# I4 格式：用于 SETQ 指令（）
+i4_fields = {
+    "imm":   (0, 3)
+}
+
 # BCOND 格式：条件分支指令
 bcond_fields = {
     "cond": (8, 11),  # 条件码占 11-8
@@ -129,7 +134,19 @@ instruction_set = {
     "EI":     Instruction(opcode=None, ext=None, fmt="FIX", fields={"value": 0x4070}),
     "RETX":   Instruction(opcode=None, ext=None, fmt="FIX", fields={"value": 0x4090}),
     "WAIT":   Instruction(opcode=None, ext=None, fmt="FIX", fields={"value": 0x0000}),
-    "EXCP":   Instruction(opcode=None, ext=None, fmt="FIXV", fields={"fixed": 0x40B0, "vector": (0, 3)})
+    "EXCP":   Instruction(opcode=None, ext=None, fmt="FIXV", fields={"fixed": 0x40B0, "vector": (0, 3)}),
+
+    # 数据通路指令
+    "STCR": Instruction(opcode=0b0000, ext=0b0100, fmt="RR", fields=rr_fields),  # Reg → CIM
+    "STCM": Instruction(opcode=0b0000, ext=0b1000, fmt="RR", fields=rr_fields),  # DMEM → CIM
+    "LDCR": Instruction(opcode=0b0000, ext=0b1100, fmt="RR", fields=rr_fields),  # CIM → Reg
+    # 计算指令
+    "CMPT": Instruction(opcode=0b0000, ext=0b1111, fmt="RR", fields=rr_fields),  # 激活寄存器 + DMEM addr寄存器
+
+    # 量化设置
+    "SETQ": Instruction(opcode=0b0100, ext=0b1111, fmt="I4", fields=i4_fields)
+  
+
 }
 
 if __name__ == '__main__':
