@@ -104,9 +104,11 @@ def assemble_line_label_aware(line, current_addr, symbol_table):
 
     tokens = re.split(r'[,\s]+', line)
     mnemonic = tokens[0].upper()
+    # print(mnemonic)
     if mnemonic not in instruction_set:
         raise ValueError(f"Unknown instruction: {mnemonic}")
     instr = instruction_set[mnemonic]
+    # print(instr.fmt)
 
     # 准备解析操作数(可能包含标签)
     # 先将 tokens[1..] 里的潜在 label 替换成地址/偏移

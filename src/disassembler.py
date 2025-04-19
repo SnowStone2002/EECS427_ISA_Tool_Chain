@@ -73,6 +73,15 @@ def disassemble_instruction(machine_code):
                     Rdest = (machine_code >> 8) & 0xF
                     Rsrc = machine_code & 0xF
                     return f"{mnemonic} R{Rdest}, R{Rsrc}"
+        elif instr.fmt == "I4":
+            if opcode == instr.opcode:
+                ext = (machine_code >> 4) & 0xF
+                if instr.ext is not None and ext == instr.ext:
+                    # I4 格式：位15-12: opcode, 11-8:, 位7-4:, 位3-0: immed
+                    # 提取位4作为 s 位（假设只有这一位有效）
+                    imm = machine_code & 0xF
+                    # 如果 s == 1，则认为立即数为负
+                    return f"{mnemonic} {imm}"
         elif instr.fmt == "RI":
             if opcode == instr.opcode:
                 # RI 格式：位15-12: opcode, 11-8: Rdest, 7-0: imm
@@ -81,14 +90,16 @@ def disassemble_instruction(machine_code):
                 return f"{mnemonic} R{Rdest}, 0x{imm:X}"
         elif instr.fmt == "RI4":
             if opcode == instr.opcode:
-                # RI4 格式：位15-12: opcode, 11-8: Rdest, 位7-4: (固定为0 except bit4存 s), 位3-0: immed
-                Rdest = (machine_code >> 8) & 0xF
-                # 提取位4作为 s 位（假设只有这一位有效）
-                s = (machine_code >> 4) & 0x1
-                imm = machine_code & 0xF
-                # 如果 s == 1，则认为立即数为负
-                imm_value = -imm if s == 1 else imm
-                return f"{mnemonic} R{Rdest}, {imm_value}"
+                ext = (machine_code >> 4) & 0xF
+                if instr.ext is not None and ext == instr.ext:
+                    # RI4 格式：位15-12: opcode, 11-8: Rdest, 位7-4: (固定为0 except bit4存 s), 位3-0: immed
+                    Rdest = (machine_code >> 8) & 0xF
+                    # 提取位4作为 s 位（假设只有这一位有效）
+                    s = (machine_code >> 4) & 0x1
+                    imm = machine_code & 0xF
+                    # 如果 s == 1，则认为立即数为负
+                    imm_value = -imm if s == 1 else imm
+                    return f"{mnemonic} R{Rdest}, {imm_value}"
         elif instr.fmt == "Bcond":
             if opcode == instr.opcode:
                 # BCOND 格式：位15-12: opcode, 11-8: cond, 7-0: disp (8位2's complement)
@@ -121,9 +132,11 @@ def disassemble_instruction(machine_code):
         elif instr.fmt == "IR":
             if opcode == instr.opcode:
                 # IR 格式（例如 TBITI）：位15-12: opcode, 11-8: Rsrc, 7-0: imm
-                Rsrc = (machine_code >> 8) & 0xF
-                imm = machine_code & 0xFF
-                return f"{mnemonic} R{Rsrc}, 0x{imm:X}"
+                ext = (machine_code >> 4) & 0xF
+                if instr.ext is not None and ext == instr.ext:
+                    Rsrc = (machine_code >> 8) & 0xF
+                    imm = machine_code & 0xFF
+                    return f"{mnemonic} R{Rsrc}, 0x{imm:X}"
     # 如果无法识别，则返回错误信息
     return f"??? (0x{machine_code:04X})"
 

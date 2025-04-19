@@ -40,6 +40,10 @@ class Simulator:
         self.regs = [0] * 16
         # 512个16位有符号数
         self.dmem = [0] * 512
+        # 用来模拟 CIM 的 16 行 16 位存储
+        self.cim_mem = [0] * 16
+        # 用来保存 SETQ 指令设置的量化位宽（0–15）
+        self.cim_qnum = 0
         # PSR标志 F（溢出）、N（负数）、Z（零）
         self.flagF = False
         self.flagN = False
@@ -439,6 +443,102 @@ class Simulator:
             self.pc = new_pc - 1
             self.debug_print(f"JAL => R{rdest} = {link_val}, jump from {old_pc} to {new_pc}")
 
+        # -------------- CIM 存取指令 --------------
+        elif mnemonic == "STCR":
+            # STCR Rsrc, RCaddr -> CIM[regs[RCaddr]] = regs[Rsrc]
+            rsrc = self.parse_reg(tokens[1])
+            rcaddr = self.parse_reg(tokens[2])
+            data = self.regs[rsrc]
+            caddr = self.regs[rcaddr]
+            self.cim_mem[caddr] = self.to_16bit(data)
+            self.debug_print(f"STCR => CIM[{caddr}] = R{rsrc} ({data})")
+
+        elif mnemonic == "STCM":
+            # STCM RCaddr, Raddr -> CIM[regs[RCaddr]] = DMEM[ regs[Raddr] ]
+            rcaddr = self.parse_reg(tokens[1])
+            raddr = self.parse_reg(tokens[2])
+            caddr = self.regs[rcaddr] & 0xF
+            data = self.dmem[addr]
+            self.cim_mem[caddr] = self.to_16bit(data)
+            self.debug_print(f"STCM => CIM[{caddr}] = DMEM[{addr}] ({data})")
+
+        elif mnemonic == "LDCR":
+            # LDCR RCaddr, Rdest -> regs[Rdest] = CIM[ regs[RCaddr] ]
+            rcaddr = self.parse_reg(tokens[1])
+            rdest = self.parse_reg(tokens[2])
+            data = self.cim_mem[rcaddr]
+            val16 = self.to_16bit(data)
+            self.regs[rdest] = val16
+            self.update_flags(val16)
+            self.debug_print(f"LDCR => R{rdest} = CIM[{caddr}] ({data}) => {val16}")
+
+        # -------------- CIM 计算指令 --------------
+        elif mnemonic == "CMPT":
+            # CMPT Rsrc, Raddr
+            #   Rsrc   存放 16-bit 激活向量在 regs[Rsrc]
+            #   Raddr  regs[Raddr] 低 9 位给出要写回的 DMEM 地址
+            rsrc  = self.parse_reg(tokens[1])
+            raddr = self.parse_reg(tokens[2])
+            act16 = self.regs[rsrc] & 0xFFFF
+
+            # 拆出四个 4-bit 有符号激活 x0..x3
+            acts = []
+            for i in range(4):
+                nib = (act16 >> (4*i)) & 0xF
+                acts.append(nib if nib < 8 else nib - 16)
+
+            # 确定 4 行的 base：用寄存器号低 2 位
+            base = rsrc & 0x3
+
+            results4 = []
+            for lane in range(4):
+                row = base + (lane << 2)   # base + {0,4,8,12}
+                w16 = self.cim_mem[row] & 0xFFFF
+
+                # 拆出四个 4-bit 有符号权重 w0..w3
+                ws = []
+                for j in range(4):
+                    wnb = (w16 >> (4*j)) & 0xF
+                    ws.append(wnb if wnb < 8 else wnb - 16)
+
+                # 点乘累加
+                acc = sum(ws[j] * acts[j] for j in range(4))
+
+                # 算术右移量化，保持符号
+                q = self.cim_qnum
+                if acc >= 0:
+                    acc_q = acc >> q
+                else:
+                    acc_q = -((-acc) >> q)
+
+                # 截成 4-bit 有符号，再拼成无符号 4-bit
+                acc4 = acc_q & 0xF
+
+                results4.append(acc4)
+
+            # 四个通道拼回 16-bit：lane0 在低 4 位，lane1 在 7:4，依次类推
+            packed = sum((results4[l] & 0xF) << (4*l) for l in range(4))
+
+            # 写回 DMEM
+            addr = self.regs[raddr] & 0x1FF
+            self.dmem[addr] = self.to_16bit(packed)
+
+            self.debug_print(
+                f"CMPT => base={base}, acts={acts}, "
+                f"weights@rows={[base+4*l for l in range(4)]}, "
+                f"results4={results4}, packed=0x{packed:04X} -> DMEM[{addr}]"
+            )
+
+        # -------------- 量化设置指令 --------------
+        elif mnemonic == "SETQ":
+            # SETQ imm -> cim_qnum = imm (0–15)
+            if len(tokens) != 2:
+                print("[SIM] Syntax error in SETQ (expected SETQ imm)")
+                return
+            q = self.parse_imm(tokens[1]) & 0xF
+            self.cim_qnum = q
+            self.debug_print(f"SETQ => QNUM = {q}")
+
         else:
             print(f"[SIM] Unsupported instruction: {mnemonic}")
 
@@ -530,6 +630,10 @@ class Simulator:
         for i in range(16):
             print(f"  R{i} = {self.regs[i]}")
         print(f"Flags: F={self.flagF}, N={self.flagN}, Z={self.flagZ}")
+        print("CIM memory (16 rows):")
+        for i, v in enumerate(self.cim_mem):
+            print(f"  row[{i:2}] = 0x{v & 0xFFFF:04X}")
+        print(f"CIM QNUM = {self.cim_qnum}")
         # 可打印部分 DMEM 内容
 
 def main():
