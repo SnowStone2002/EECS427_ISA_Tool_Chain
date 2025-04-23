@@ -91,7 +91,7 @@ def disassemble_instruction(machine_code):
         elif instr.fmt == "RI4":
             if opcode == instr.opcode:
                 ext = (machine_code >> 4) & 0xF
-                if instr.ext is not None and ext == instr.ext:
+                if instr.ext is not None and (ext >> 1) == (instr.ext >> 1):
                     # RI4 格式：位15-12: opcode, 11-8: Rdest, 位7-4: (固定为0 except bit4存 s), 位3-0: immed
                     Rdest = (machine_code >> 8) & 0xF
                     # 提取位4作为 s 位（假设只有这一位有效）

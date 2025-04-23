@@ -213,4 +213,4 @@ LDCR    R6, R7
 为了简化流程，可使用 [src/run.py](./src/run.py) 脚本，该脚本整合了上述步骤，只需指定输入文件名即可：
 
 ```bash
-python3 ./src/run.py tests/Fibonacci.asm
+python3 ./src/run.py tests/CIM_test.asm

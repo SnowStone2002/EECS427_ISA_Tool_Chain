@@ -501,18 +501,27 @@ class Simulator:
                     wnb = (w16 >> (4*j)) & 0xF
                     ws.append(wnb if wnb < 8 else wnb - 16)
 
+                    print(ws[j])
+
                 # 点乘累加
                 acc = sum(ws[j] * acts[j] for j in range(4))
+
+                print("acc=",acc)
 
                 # 算术右移量化，保持符号
                 q = self.cim_qnum
                 if acc >= 0:
                     acc_q = acc >> q
+                    if acc_q >= 7:
+                        acc_q = 7
+                    acc4 = acc_q & 0x7
                 else:
-                    acc_q = -((-acc) >> q)
-
-                # 截成 4-bit 有符号，再拼成无符号 4-bit
-                acc4 = acc_q & 0xF
+                    # acc_q = -((-acc) >> q)
+                    acc_q = acc >> q
+                    # acc_q = acc_q - 1
+                    if acc_q <= -8:
+                        acc_q = -8
+                    acc4 = acc_q & 0xF
 
                 results4.append(acc4)
 
@@ -522,6 +531,10 @@ class Simulator:
             # 写回 DMEM
             addr = self.regs[raddr] & 0x1FF
             self.dmem[addr] = self.to_16bit(packed)
+
+            acts = acts[::-1]
+            results4 = [x - 16 if x >= 8 else x for x in results4]
+            results4 = results4[::-1]
 
             self.debug_print(
                 f"CMPT => base={base}, acts={acts}, "

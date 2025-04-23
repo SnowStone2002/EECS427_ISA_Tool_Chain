@@ -103,9 +103,9 @@ instruction_set = {
 
     # 移位指令
     "LSH":    Instruction(opcode=0b1000, ext=0b0100, fmt="RR", fields=rr_fields),
-    "LSHI":   Instruction(opcode=0b1000, ext=None, fmt="RI4", fields=ri4_fields),
+    "LSHI":   Instruction(opcode=0b1000, ext=0b0000, fmt="RI4", fields=ri4_fields),
     "ASHU":   Instruction(opcode=0b1000, ext=0b0110, fmt="RR", fields=rr_fields),
-    "ASHUI":  Instruction(opcode=0b1000, ext=None, fmt="RI4", fields=ri4_fields),
+    "ASHUI":  Instruction(opcode=0b1000, ext=0b0010, fmt="RI4", fields=ri4_fields),
     "LUI":    Instruction(opcode=0b1111, ext=None, fmt="RI", fields=ri_fields),
 
     # 内存访问
